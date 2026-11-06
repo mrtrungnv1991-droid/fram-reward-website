@@ -6,4 +6,4 @@ The V7 dashboard uses `bridge-v7.php` to call a separate HTTPS Controller. Deplo
 
 Do not commit `config.php`, the hosting `secure` directory, `data`, exports, logs, or database backups.
 
-The legacy V4/V5 dashboard files have been removed. `index.php` remains the PHP login and mandatory password-change entry point, and redirects signed-in users to `dashboard-v7.php`. The `api_v4_*` files remain because they are data endpoints, not the old interface. Run `node scripts/check-legacy-ui.mjs` to verify the legacy UI cannot reappear; GitHub Actions also checks JavaScript and PHP syntax.
+The legacy V4/V5 dashboard files and `bridge-v5.php` have been removed. `index.php` remains the PHP login and mandatory password-change entry point, and redirects signed-in users to `dashboard-v7.php`. The `api_v4_*` and `api_v5_*` files remain because they are data endpoints, not the old interface. Run `node scripts/check-legacy-ui.mjs` to verify the legacy UI cannot reappear; GitHub Actions also checks JavaScript and PHP syntax.
