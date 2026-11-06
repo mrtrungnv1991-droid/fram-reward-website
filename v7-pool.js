@@ -1,0 +1,16 @@
+(()=>{'use strict';
+let offset=0,query='';
+const esc=v=>String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const labels={complete:'Đã hoàn thành Daily Set',incomplete:'Còn nhiệm vụ',unchecked:'Chưa kiểm tra',unknown:'Chưa nhận diện được tiến độ',stale:'Cần kiểm tra lại',login_required:'Cần đăng nhập',identity_mismatch:'Sai tài khoản trong hồ sơ',check_failed:'Không kiểm tra được'};
+const color={complete:'done',incomplete:'queued',stale:'unchecked',login_required:'needs_human',identity_mismatch:'error',check_failed:'error'};
+const time=v=>v?new Date(v).toLocaleString('vi-VN',{timeZone:'Asia/Bangkok',hour12:false}):'—';
+async function render(root,api){
+ const data=await api(`pool-status?limit=50&offset=${offset}&q=${encodeURIComponent(query)}`);
+ root.innerHTML=`<div class="notice">Theo dõi chỉ đọc. Tài khoản còn nhiệm vụ được đánh dấu để xử lý thủ công; hệ thống không tự tìm kiếm, làm quiz, nhận điểm hoặc đổi thưởng. Kết quả quá ${data.stale_after_minutes} phút cần kiểm tra lại.</div><div class="toolbar"><input id="pool-search" aria-label="Tìm tài khoản trong pool" placeholder="Tìm email…" value="${esc(query)}"><button id="pool-find">Tìm kiếm</button><span class="subtle">${data.total} tài khoản đang bật</span></div><div class="table-wrap"><table><thead><tr><th>Tài khoản</th><th>Nhóm</th><th>Trạng thái</th><th>Daily Set</th><th>Còn lại</th><th>Điểm hiện có</th><th>Kiểm tra gần nhất</th></tr></thead><tbody>${data.rows.length?data.rows.map(a=>`<tr><td>${esc(a.name)}</td><td>${esc(a.group_name)}</td><td><span class="badge ${color[a.state]||''}">${esc(labels[a.state]||a.state)}</span></td><td>${a.snapshot?.daily_set?esc(a.snapshot.daily_set.completed+'/'+a.snapshot.daily_set.total):'—'}</td><td>${esc(a.remaining)}</td><td>${esc(a.snapshot?.available_points)}</td><td>${esc(time(a.snapshot?.checked_at))}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Chưa có tài khoản trong pool đang bật.</td></tr>'}</tbody></table></div><div class="pagination"><span>${data.total?offset+1:0}–${Math.min(offset+50,data.total)} / ${data.total}</span><div><button id="pool-prev" ${!offset?'disabled':''}>Trang trước</button><button id="pool-next" ${offset+50>=data.total?'disabled':''}>Trang sau</button></div></div><div class="panel" style="margin-top:22px"><h2>Cách đọc kết quả</h2><p>“Hoàn thành” chỉ áp dụng cho bộ Daily Set vừa quan sát, không có nghĩa mọi loại nhiệm vụ hoặc số điểm mục tiêu đều hoàn thành. Điểm hiển thị là số dư hiện có, không phải điểm do công cụ vừa kiếm được.</p><p>Sau khi tự xử lý nhiệm vụ trên trang Microsoft, lần kiểm tra chỉ đọc tiếp theo sẽ cập nhật bảng này. Những tài khoản chưa kiểm tra, sai danh tính hoặc có dữ liệu cũ luôn được hiển thị riêng.</p></div>`;
+ root.querySelector('#pool-find').onclick=()=>{query=root.querySelector('#pool-search').value;offset=0;void render(root,api).catch(e=>{root.textContent=e.message;});};
+ root.querySelector('#pool-search').onkeydown=e=>{if(e.key==='Enter')root.querySelector('#pool-find').click();};
+ root.querySelector('#pool-prev').onclick=()=>{offset=Math.max(0,offset-50);void render(root,api);};
+ root.querySelector('#pool-next').onclick=()=>{offset+=50;void render(root,api);};
+}
+window.RW_POOL={render};
+})();

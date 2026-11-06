@@ -1,0 +1,25 @@
+# Hosting credentials and runtime data
+config.php
+controller-v7.php
+controller-v5.php
+.env
+.env.*
+data/
+downloads/
+secure/
+error_log
+*.log
+*.bak
+*.bak_*
+*.sql
+*.sqlite*
+*.db
+*.zip
+*.rar
+*.tar*
+
+# Local tools and editor state
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

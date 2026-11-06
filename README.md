@@ -1,0 +1,7 @@
+# Rewards Farm Manager — website source
+
+This repository contains the PHP, JavaScript, CSS and HTML source mirrored from `game4win.net/public_html` on 2026-11-06. It does not include hosting credentials, database contents, account credentials, browser profiles, or the private Controller configuration.
+
+The V7 dashboard uses `bridge-v7.php` to call a separate HTTPS Controller. Deploying these files alone does not start that Controller or a physical host agent. See the architecture and deployment documents in the local `Fram Reward/website` folder before configuring a new environment.
+
+Do not commit `config.php`, the hosting `secure` directory, `data`, exports, logs, or database backups.

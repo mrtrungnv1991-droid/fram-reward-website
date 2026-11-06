@@ -1,0 +1,18 @@
+/* Visual layer for the existing PHP login and password-change forms. */
+:root{color-scheme:dark}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(circle at 15% 15%,#1b3556 0,#101b2b 37%,#0c1420 100%);color:#e7eef9;font-family:Inter,Segoe UI,Arial,sans-serif}
+.rw-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:24px}
+.rw-panel.rw-login{width:min(100%,440px);box-sizing:border-box;padding:28px;border:1px solid #304158;border-radius:18px;background:#172436;box-shadow:0 24px 80px #02081390;color:#e7eef9}
+.rw-panel.rw-login .rw-panel-pad{padding:0}
+.rw-login h2{font-size:30px;line-height:1.15;letter-spacing:-.03em;margin:12px 0 20px;color:#fff}
+.rw-login .rw-muted{color:#a9bdd4;font-size:14px;line-height:1.5}
+.rw-login .rw-field{margin:18px 0}
+.rw-login label{display:block;margin-bottom:7px;color:#d8e4f2;font-size:14px;font-weight:600}
+.rw-login .rw-input{width:100%;box-sizing:border-box;border:1px solid #38506b;border-radius:10px;background:#101b2b;color:#f7faff;padding:13px 14px;font-size:15px;outline:none}
+.rw-login .rw-input:focus{border-color:#76adff;box-shadow:0 0 0 3px #4e94ff35}
+.rw-login .rw-btn.primary{background:#5f9df5;border:0;border-radius:10px;color:#081626;font-weight:700;cursor:pointer}
+.rw-login .rw-btn.primary:hover{background:#8cbbff}
+.rw-login .rw-alert,.rw-login .rw-warn{border-radius:10px;padding:11px 13px;margin:14px 0}
+.rw-login .rw-alert.bad{background:#4d2630;color:#ffdbe0}
+.rw-login .rw-alert.ok{background:#204534;color:#d7ffe8}

@@ -1,0 +1,33 @@
+(()=>{'use strict';
+const GiB=1024**3;
+const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);if(cls)n.className=cls;return n;};
+const time=v=>v?new Date(v).toLocaleString('vi-VN',{timeZone:'Asia/Bangkok',hour12:false}):'Chưa có';
+const bytes=v=>Number.isFinite(v)?(v/GiB).toFixed(2)+' GiB':'Chưa có';
+function field(form,name,label,value,type='number',min=0,max=999999){const wrap=el('label',label),input=el('input');input.name=name;input.type=type;if(type==='checkbox'){input.checked=!!value;wrap.prepend(input);}else{input.value=value??'';input.required=true;if(type==='number'){input.min=min;input.max=max;input.step='any';}wrap.append(input);}form.append(wrap);return input;}
+function button(text,fn){const b=el('button',text);b.type='button';b.onclick=fn;return b;}
+async function render(root,api,principal){
+ root.replaceChildren();if(principal?.role!=='admin'){root.append(el('p','Chỉ quản trị viên được cấu hình sao lưu và giới hạn tài nguyên.','notice'));return;}
+ const feedback=el('p');feedback.setAttribute('role','status');root.append(feedback);
+ const [data,observers]=await Promise.all([api('maintenance'),api('observers')]);if(!root.contains(feedback))return;
+ const panel=el('section',undefined,'panel');panel.append(el('h2','Sao lưu mã hóa và thời hạn lưu dữ liệu'),el('p',data.directory_configured?'Đã cấu hình nơi lưu sao lưu riêng trên máy điều phối.':'Chưa cấu hình nơi lưu sao lưu trên máy điều phối.'));
+ panel.append(el('p','Khóa giải mã cần được lưu riêng và bảo quản trước khi chuyển máy. Phục hồi chỉ vào cơ sở dữ liệu trống; phiên đăng nhập và worker sẽ bị vô hiệu hóa sau phục hồi.'));
+ panel.append(el('p','Bản sao lưu gần nhất: '+time(data.status.last_backup_at)+' · Số lần lỗi liên tiếp: '+(data.status.failures??0)));
+ panel.append(el('p','RTO là thời gian phục hồi mục tiêu; chưa được xác nhận bằng diễn tập trên VPS thật.','subtle'));
+ const form=el('form'),grid=el('div',undefined,'form-grid');form.append(grid);
+ field(grid,'backups_enabled',' Bật sao lưu định kỳ',data.policy.backups_enabled,'checkbox');field(grid,'retention_enabled',' Bật dọn dữ liệu theo thời hạn',data.policy.retention_enabled,'checkbox');
+ field(grid,'rpo_minutes','Khoảng sao lưu / mức mất dữ liệu mục tiêu (phút)',data.policy.rpo_minutes,'number',15,10080);field(grid,'rto_minutes','Thời gian phục hồi mục tiêu (phút)',data.policy.rto_minutes,'number',5,1440);
+ field(grid,'event_days','Giữ nhật ký (ngày)',data.policy.event_days,'number',30,3650);field(grid,'observation_days','Giữ lịch sử quan sát (ngày)',data.policy.observation_days,'number',30,3650);field(grid,'backup_days','Giữ bản sao lưu (ngày)',data.policy.backup_days,'number',7,3650);
+ const save=el('button','Lưu chính sách','primary');form.append(save);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{const f=new FormData(form),b={};for(const key of ['rpo_minutes','rto_minutes','event_days','observation_days','backup_days'])b[key]=Number(f.get(key));for(const key of ['backups_enabled','retention_enabled'])b[key]=f.has(key);await api('maintenance',b);feedback.textContent='Đã lưu chính sách sao lưu và thời hạn lưu dữ liệu.';}catch(e){feedback.textContent=e.message;}finally{save.disabled=false;}};
+ panel.append(form,button('Tạo bản sao lưu ngay',async e=>{const b=e.currentTarget;b.disabled=true;try{const result=await api('maintenance/backup',{});feedback.textContent='Đã tạo bản sao lưu mã hóa lúc '+time(result.last_backup_at)+'.';await render(root,api,principal);}catch(e){feedback.textContent=e.message;}finally{b.disabled=false;}}));
+ const list=el('ul');for(const backup of data.backups.slice(0,20))list.append(el('li',time(backup.created_at)+' · '+(backup.bytes/1024).toFixed(1)+' KiB · '+backup.name));panel.append(list);root.append(panel);
+ const resources=el('section',undefined,'panel');resources.append(el('h2','Tài nguyên và giới hạn nhận việc'),el('p','Bộ theo dõi hiện chạy lần lượt một hồ sơ. Ngưỡng tài nguyên có khoảng phục hồi để tránh bật/tắt liên tục; giới hạn hàng đợi và nhóm vẫn được kiểm tra độc lập.'));
+ const table=el('table'),head=el('tr');for(const text of ['Máy','CPU','RAM trống','Đĩa trống','Trần hiệu lực','Lý do'])head.append(el('th',text));table.append(head);
+ const reason={cpu:'CPU cao',ram:'Thiếu RAM',disk:'Thiếu dung lượng',unknown:'Chưa có số đo hợp lệ'};
+ for(const worker of observers.rows){const r=worker.status?.resources,row=el('tr');for(const value of [worker.name,r?.cpuPercent==null?'Chưa có':r.cpuPercent.toFixed(1)+'%',bytes(r?.freeRamBytes),bytes(r?.freeDiskBytes),r?.effective_cap??'Chưa có',reason[r?.reason]??(worker.online?'Sẵn sàng':'Offline')])row.append(el('td',value));table.append(row);}const scroll=el('div',undefined,'table-wrap');scroll.append(table);resources.append(scroll);
+ const selectLabel=el('label','Máy cần cấu hình'),select=el('select');for(const w of observers.rows){const option=el('option',w.name);option.value=w.id;select.append(option);}selectLabel.append(select);resources.append(selectLabel);
+ const policyForm=el('form');resources.append(policyForm);root.append(resources);
+ async function loadPolicy(){policyForm.replaceChildren();if(!select.value)return;try{const {policy:p}=await api('workers/'+encodeURIComponent(select.value)+'/resource-policy');const grid=el('div',undefined,'form-grid');policyForm.append(grid);field(grid,'cap','Trần phiên của máy',p.cap,'number',1,50);field(grid,'groupCap','Trần bổ sung theo chính sách',p.groupCap,'number',1,50);field(grid,'cpuHigh','Dừng nhận việc khi CPU đạt (%)',p.cpuHigh,'number',1,100);field(grid,'cpuLow','Phục hồi khi CPU dưới (%)',p.cpuLow,'number',0,99);field(grid,'ramMinBytes','Dừng khi RAM trống dưới (GiB)',p.ramMinBytes/GiB);field(grid,'ramResumeBytes','RAM trống để phục hồi (GiB)',p.ramResumeBytes/GiB);field(grid,'diskMinBytes','Dừng khi đĩa trống dưới (GiB)',p.diskMinBytes/GiB);field(grid,'diskResumeBytes','Đĩa trống để phục hồi (GiB)',p.diskResumeBytes/GiB);field(grid,'healthySamples','Số mẫu ổn định trước khi phục hồi',p.healthySamples,'number',1,100);const submit=el('button','Lưu giới hạn tài nguyên','primary');policyForm.append(submit);policyForm.onsubmit=async e=>{e.preventDefault();submit.disabled=true;try{const values=Object.fromEntries(new FormData(policyForm)),b={};for(const [k,v]of Object.entries(values))b[k]=Number(v)*(k.endsWith('Bytes')?GiB:1);await api('workers/'+encodeURIComponent(select.value)+'/resource-policy',b);feedback.textContent='Đã lưu. Agent nhận chính sách ở lượt kết nối tiếp theo.';}catch(e){feedback.textContent=e.message;}finally{submit.disabled=false;}};}catch(e){feedback.textContent=e.message;}}
+ select.onchange=loadPolicy;await loadPolicy();
+}
+window.RW_SYSTEM={render};
+})();
