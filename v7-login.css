@@ -12,6 +12,8 @@ body{background:radial-gradient(circle at 15% 15%,#1b3556 0,#101b2b 37%,#0c1420 
 .rw-login .rw-input{width:100%;box-sizing:border-box;border:1px solid #38506b;border-radius:10px;background:#101b2b;color:#f7faff;padding:13px 14px;font-size:15px;outline:none}
 .rw-login .rw-input:focus{border-color:#76adff;box-shadow:0 0 0 3px #4e94ff35}
 .rw-login .rw-btn.primary{background:#5f9df5;border:0;border-radius:10px;color:#081626;font-weight:700;cursor:pointer}
+.rw-login .rw-btn{display:block;width:100%;padding:13px 14px;font:inherit;font-size:15px}
+.rw-login .rw-warn{background:#523e23;color:#fff0c8}
 .rw-login .rw-btn.primary:hover{background:#8cbbff}
 .rw-login .rw-alert,.rw-login .rw-warn{border-radius:10px;padding:11px 13px;margin:14px 0}
 .rw-login .rw-alert.bad{background:#4d2630;color:#ffdbe0}
