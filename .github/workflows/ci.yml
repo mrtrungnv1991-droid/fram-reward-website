@@ -1,0 +1,21 @@
+name: Source checks
+on:
+  push:
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check JavaScript syntax and legacy UI removal
+        run: |
+          find . -type f \( -name '*.js' -o -name '*.mjs' \) -not -path './.git/*' -print0 | xargs -0 -n1 node --check
+          node scripts/check-legacy-ui.mjs
+      - name: Check PHP syntax
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y php-cli
+          find . -type f -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
